@@ -33,6 +33,29 @@ def get_blog_by_id(id, response: Response, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
         response.status_code = status.HTTP_404_NOT_FOUND
-        return {"detail": f"Blog with the id {id} is not available"}
+        return {"detail": f"Blog with id {id} is not available"}
     response.status_code = status.HTTP_200_OK
     return blog
+
+@app.delete("/blogs/{id}")
+def remove_blog(id, response: Response, db: Session = Depends(get_db)):
+    del_blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    if not del_blog:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"detail": f"Blog with id {id} is not available"}
+    db.delete(del_blog)
+    db.commit()
+    response.status_code = status.HTTP_200_OK
+    return {"message": f"Blog with id {id} has been deleted successfully"}
+
+
+@app.put("/blogs/{id}")
+def update_blog(id, response: Response, request: Blog, db: Session = Depends(get_db)):
+    new_blog = db.query(models.Blog).filter(models.Blog.id == id)
+    if not new_blog.first():
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"detail": f"Blog with id {id} is not available"}
+    new_blog.update({"title":request.title, "body": request.body}, synchronize_session=False)
+    db.commit()
+    response.status_code = status.HTTP_202_ACCEPTED
+    return {"message": f"Blog with id {id} has been updated successfully"}
